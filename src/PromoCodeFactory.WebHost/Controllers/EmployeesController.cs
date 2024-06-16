@@ -29,7 +29,7 @@ namespace PromoCodeFactory.WebHost.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<List<EmployeeShortResponse>> GetEmployeesAsync()
-        {
+       {
             var employees = await _employeeRepository.GetAllAsync();
 
             var employeesModelList = employees.Select(x =>
@@ -70,5 +70,68 @@ namespace PromoCodeFactory.WebHost.Controllers
 
             return employeeModel;
         }
+    
+        /// <summary>
+        /// Создание новой сущности сотрудника
+        /// </summary>
+        [HttpPost("new")]
+        public async Task<IActionResult> CreateEmployee(EmployeePost data)
+        {
+            var newEmployee = new Employee()
+            {
+                FirstName = data.FirstName,
+                LastName = data.LastName,
+
+                Email = data.Email,
+                Roles = data.Roles.Select(x => new Role() 
+                { 
+                    Name = x.Name, 
+                    Description = x.Description 
+                }).ToList()
+            };
+
+            await _employeeRepository.AddAsync(newEmployee);
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Обновление информации о сотруднике
+        /// </summary>
+        [HttpPatch("upd/{id:guid}")]
+        public async Task<IActionResult> UpdateEmployee(EmployeePost data, Guid id)
+        {
+            var updateEmployee = new Employee()
+            {
+                FirstName = data.FirstName,
+                LastName = data.LastName,
+
+                Email = data.Email,
+                Roles = data.Roles.Select(x => new Role() 
+                { 
+                    Name = x.Name, 
+                    Description = x.Description 
+                }).ToList()
+            };
+
+            var employee = await _employeeRepository.UpdateAsync(id, updateEmployee);
+
+            if(employee == null)
+            {
+                return NotFound();
+            }
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Удаление сущности из коллекции 
+        /// </summary>
+        [HttpDelete("rm/{id:guid}")]
+        public async Task<IActionResult> RemoveEmployee(Guid id)
+        {
+            return await Task.FromResult(Ok(_employeeRepository.RemoveAsync(id)));
+        }
+        
     }
 }
