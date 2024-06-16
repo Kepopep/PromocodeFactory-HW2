@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "PromoCodeFactory.DataAcces": {
+      "commandName": "Executable",
+      "executablePath": "E:\\OTUS\\PromocodeFactory-HW2\\src\\PromoCodeFactory.WebHost\\bin\\Debug\\net8.0\\PromoCodeFactory.WebHost.exe",
+      "nativeDebugging": true
+    }
+  }
+}
