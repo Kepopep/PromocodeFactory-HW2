@@ -8,58 +8,44 @@ namespace PromoCodeFactory.DataAccess.Repositories
 {
     public class InMemoryRepository<T>: IRepository<T> where T: BaseEntity
     {
-        protected IEnumerable<T> Data { get; set; }
+        protected List<T> Data { get; set; }
 
         public InMemoryRepository(IEnumerable<T> data)
         {
-            Data = data;
+            Data = data.ToList();
         }
 
         public Task<IEnumerable<T>> GetAllAsync()
         {
-            return Task.FromResult(Data);
+            return Task.FromResult(Data.AsEnumerable());
         }
 
         public Task<T> GetByIdAsync(Guid id)
         {
-            return Task.FromResult(Data.FirstOrDefault(x => x.Id == id));
+            return Task.FromResult(Data.FirstOrDefault(x => x.Id == id) ?? 
+                         throw new NullReferenceException($"No element with {id}"));
         }
 
         public Task AddAsync(T data)
         {
-            return Task.FromResult(Data = Data.Append(data));
+            Data.Add(data);
+            
+            return Task.CompletedTask;
         }
 
-        public Task RemoveAsync(Guid id)
+        public async Task RemoveAsync(Guid id)
         {
-            return Task.FromResult(Data = Data.Where(x => x.Id != id));
+            var removeData = await GetByIdAsync(id);
+            Data.Remove(removeData);
         }
 
-        public Task<T> UpdateAsync(Guid id, T data)
+        public async Task<T> UpdateAsync(Guid id, T data)
         {
-            T savedData = GetByIdAsync(id).Result;
+            var savedData = await GetByIdAsync(id);
 
-            if(savedData == null)
-            {
-                return null;
-            }
+            Data[Data.IndexOf(savedData)] = data;
 
-            var list = Data.ToList();
-
-            for (int i = 0; i < list.Count(); i++)
-            {
-                if (list[i].Id != id)
-                {
-                    continue;
-                }
-
-                list[i] = data;
-                break;
-            }
-
-            Data = list;
-
-            return Task.FromResult(data);
+            return data;
         }
     }
 }

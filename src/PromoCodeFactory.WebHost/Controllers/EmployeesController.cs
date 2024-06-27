@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PromoCodeFactory.Core.Abstractions.Repositories;
 using PromoCodeFactory.Core.Domain.Administration;
@@ -27,7 +28,9 @@ namespace PromoCodeFactory.WebHost.Controllers
         /// Получить данные всех сотрудников
         /// </summary>
         /// <returns></returns>
+        /// <response code="200">Возвращает все элементы</response>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<List<EmployeeShortResponse>> GetEmployeesAsync()
        {
             var employees = await _employeeRepository.GetAllAsync();
@@ -47,38 +50,49 @@ namespace PromoCodeFactory.WebHost.Controllers
         /// Получить данные сотрудника по Id
         /// </summary>
         /// <returns></returns>
+        /// <response code="200">Возвращает элемент по GuiD</response>
+        /// <response code="400">В случае отсутствия элемента</response>
         [HttpGet("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<EmployeeResponse>> GetEmployeeByIdAsync(Guid id)
         {
-            var employee = await _employeeRepository.GetByIdAsync(id);
-
-            if (employee == null)
-                return NotFound();
-
-            var employeeModel = new EmployeeResponse()
+            try
             {
-                Id = employee.Id,
-                Email = employee.Email,
-                Roles = employee.Roles.Select(x => new RoleItemResponse()
-                {
-                    Name = x.Name,
-                    Description = x.Description
-                }).ToList(),
-                FullName = employee.FullName,
-                AppliedPromocodesCount = employee.AppliedPromocodesCount
-            };
+                var employee = await _employeeRepository.GetByIdAsync(id);
 
-            return employeeModel;
+                var employeeModel = new EmployeeResponse()
+                {
+                    Id = employee.Id,
+                    Email = employee.Email,
+                    Roles = employee.Roles.Select(x => new RoleItemResponse()
+                    {
+                        Name = x.Name,
+                        Description = x.Description
+                    }).ToList(),
+                    FullName = employee.FullName,
+                    AppliedPromocodesCount = employee.AppliedPromocodesCount
+                };
+                
+                return Ok(employeeModel);
+            }
+            catch
+            {
+                return BadRequest($"No element, id={id}");
+            }
         }
     
         /// <summary>
         /// Создание новой сущности сотрудника
         /// </summary>
+        /// <response code="204">Успешное создание элемента</response>
         [HttpPost("new")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> CreateEmployee(EmployeePost data)
         {
             var newEmployee = new Employee()
             {
+                Id = Guid.NewGuid(),
                 FirstName = data.FirstName,
                 LastName = data.LastName,
 
@@ -92,46 +106,63 @@ namespace PromoCodeFactory.WebHost.Controllers
 
             await _employeeRepository.AddAsync(newEmployee);
 
-            return Ok();
+            return NoContent();
         }
 
         /// <summary>
         /// Обновление информации о сотруднике
         /// </summary>
+        /// <response code="200">Обновленные данные об элементе</response>
+        /// <response code="400">В случае отсутствия элемента</response>
         [HttpPatch("upd/{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdateEmployee(EmployeePost data, Guid id)
         {
-            var updateEmployee = new Employee()
+            try
             {
-                FirstName = data.FirstName,
-                LastName = data.LastName,
+                var updateEmployee = new Employee()
+                {
+                    FirstName = data.FirstName,
+                    LastName = data.LastName,
 
-                Email = data.Email,
-                Roles = data.Roles.Select(x => new Role() 
-                { 
-                    Name = x.Name, 
-                    Description = x.Description 
-                }).ToList()
-            };
+                    Email = data.Email,
+                    Roles = data.Roles.Select(x => new Role() 
+                    { 
+                        Name = x.Name, 
+                        Description = x.Description 
+                    }).ToList()
+                };
+                
+                var employee = await _employeeRepository.UpdateAsync(id, updateEmployee);
 
-            var employee = await _employeeRepository.UpdateAsync(id, updateEmployee);
-
-            if(employee == null)
-            {
-                return NotFound();
+                return Ok(employee);
             }
-
-            return Ok();
+            catch
+            {
+                return BadRequest($"No element, id={id}");
+            }
         }
 
         /// <summary>
         /// Удаление сущности из коллекции 
         /// </summary>
+        /// <response code="204">Элемент удален успешно</response>
+        /// <response code="400">В случае отсутствия элемента</response>
         [HttpDelete("rm/{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> RemoveEmployee(Guid id)
         {
-            return await Task.FromResult(Ok(_employeeRepository.RemoveAsync(id)));
+            try
+            {
+                await _employeeRepository.RemoveAsync(id);
+                return NoContent();
+            }
+            catch
+            {
+                return BadRequest($"No element, id={id}");
+            }
         }
-        
     }
 }
