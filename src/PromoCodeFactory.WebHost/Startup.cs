@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,6 +30,9 @@ namespace PromoCodeFactory.WebHost
             services.AddSingleton(typeof(IRepository<Role>), (x) => 
                 new InMemoryRepository<Role>(FakeDataFactory.Roles));
 
+            services.AddTransient<IRepository<Employee>, EmployeeEntityFrameworkRepository>();
+            
+
             services.AddOpenApiDocument(options =>
             {
                 options.Title = "PromoCode Factory API Doc";
@@ -36,11 +40,13 @@ namespace PromoCodeFactory.WebHost
             });
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, DatabaseContext dataContext)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                
+                FakeDataFactory.FillDataBase(dataContext);
             }
             else
             {
