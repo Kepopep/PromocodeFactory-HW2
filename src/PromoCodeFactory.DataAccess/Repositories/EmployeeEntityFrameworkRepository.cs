@@ -15,7 +15,6 @@ public class EmployeeEntityFrameworkRepository : IRepository<Employee>
     public EmployeeEntityFrameworkRepository(DatabaseContext context)
     {
         _context = context;
-
     }
     
     public async Task<IEnumerable<Employee>> GetAllAsync()

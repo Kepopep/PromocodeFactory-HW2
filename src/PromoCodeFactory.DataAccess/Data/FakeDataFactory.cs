@@ -54,7 +54,7 @@ namespace PromoCodeFactory.DataAccess.Data
             }
         };
         
-        public static IEnumerable<Preference> Preferences => new List<Preference>()
+        public static IList<Preference> Preferences => new List<Preference>()
         {
             new Preference()
             {
@@ -73,7 +73,7 @@ namespace PromoCodeFactory.DataAccess.Data
             }
         };
 
-        public static IEnumerable<Customer> Customers
+        public static IList<Customer> Customers
         {
             get
             {
@@ -83,16 +83,33 @@ namespace PromoCodeFactory.DataAccess.Data
                     new Customer()
                     {
                         Id = customerId,
-                        Email = "ivan_sergeev@mail.ru",
                         FirstName = "Иван",
                         LastName = "Петров",
-                        //TODO: Добавить предзаполненный список предпочтений
+                        Email = "ivan_sergeev@mail.ru",
+                        Preferences = [
+                            Preferences.FirstOrDefault(p => p.Name == "Дети")
+                        ],
+                        PromoCodes = [
+                        ]
                     }
                 };
 
                 return customers;
             }
         }
+
+        public static IList<PromoCode> PromoCodes => new List<PromoCode>()
+        {
+            new PromoCode()
+            {
+                Id = Guid.NewGuid(),
+                Code = "SALE567",
+                ServiceInfo = "Special offer",
+                BeginDate = new DateTime(2022, 3, 15),
+                EndDate = new DateTime(2022, 5, 15),
+                PartnerName = "Company B"
+            },
+        };
  
 
         public static void FillDataBase(DatabaseContext dataContext)
@@ -100,8 +117,30 @@ namespace PromoCodeFactory.DataAccess.Data
             dataContext.Database.EnsureDeleted();
             dataContext.Database.Migrate();
                 
-            dataContext.Employees.AddRange(Employees);
+            dataContext.Roles.AddRange(Roles);
+            dataContext.Preferences.AddRange(Preferences);
+            dataContext.PromoCodes.AddRange(PromoCodes);
+            
+            dataContext.SaveChanges();
+
+            var testEmployees = Employees;
+            testEmployees[0].Roles = new List<Role>() { dataContext.Roles.FirstOrDefault(r => r.Name == "Admin") };
+            testEmployees[1].Roles = new List<Role>() { dataContext.Roles.FirstOrDefault(r => r.Name == "PartnerManager") };
+
+            var testCustomers = Customers;
+            testCustomers[0].Preferences = new List<Preference>() { dataContext.Preferences.FirstOrDefault(p => p.Name == "Дети")};
+            
+            dataContext.Employees.AddRange(testEmployees);
+            dataContext.Customers.AddRange(testCustomers);
             dataContext.SaveChanges(); 
+            
+            var testPromoCode = dataContext.Set<PromoCode>().FirstOrDefault();
+
+            testPromoCode.PartnerManager = dataContext.Set<Employee>().FirstOrDefault();
+            testPromoCode.Preference = dataContext.Set<Preference>().FirstOrDefault();
+            testPromoCode.Customer = dataContext.Set<Customer>().FirstOrDefault();
+            
+            dataContext.SaveChanges();
         }
     }
 }
