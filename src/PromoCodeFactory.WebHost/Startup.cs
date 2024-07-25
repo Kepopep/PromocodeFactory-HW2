@@ -5,8 +5,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PromoCodeFactory.Core.Abstractions.Repositories;
 using PromoCodeFactory.Core.Domain.Administration;
+using PromoCodeFactory.Core.Domain.PromoCodeManager;
 using PromoCodeFactory.DataAccess.Data;
 using PromoCodeFactory.DataAccess.Repositories;
+using PromoCodeFactory.DataAccess.Repositories.EFRepository;
 using PromoCodeFactory.EntityFramework;
 
 namespace PromoCodeFactory.WebHost
@@ -29,7 +31,7 @@ namespace PromoCodeFactory.WebHost
             services.AddSingleton(typeof(IRepository<Role>), (x) => 
                 new InMemoryRepository<Role>(FakeDataFactory.Roles));
 
-            services.AddTransient<IRepository<Employee>, EmployeeEntityFrameworkRepository>();
+            services.AddTransient<IRepository<Customer>, CustomerEntityFrameworkRepository>();
             
 
             services.AddOpenApiDocument(options =>
