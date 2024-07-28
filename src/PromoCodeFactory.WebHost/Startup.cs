@@ -32,6 +32,7 @@ namespace PromoCodeFactory.WebHost
                 new InMemoryRepository<Role>(FakeDataFactory.Roles));
 
             services.AddTransient<IRepository<Customer>, CustomerEntityFrameworkRepository>();
+            services.AddTransient<IRepository<Preference>, PreferenceEntityFrameworkRepository>();
             
 
             services.AddOpenApiDocument(options =>
