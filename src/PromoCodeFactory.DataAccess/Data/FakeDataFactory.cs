@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using PromoCodeFactory.Core.Domain.Administration;
+using PromoCodeFactory.Core.Domain.PromoCodeManager;
+using PromoCodeFactory.EntityFramework;
 
 namespace PromoCodeFactory.DataAccess.Data
 {
@@ -50,5 +53,94 @@ namespace PromoCodeFactory.DataAccess.Data
                 Description = "Партнерский менеджер"
             }
         };
+        
+        public static IList<Preference> Preferences => new List<Preference>()
+        {
+            new Preference()
+            {
+                Id = Guid.Parse("ef7f299f-92d7-459f-896e-078ed53ef99c"),
+                Name = "Театр",
+            },
+            new Preference()
+            {
+                Id = Guid.Parse("c4bda62e-fc74-4256-a956-4760b3858cbd"),
+                Name = "Семья",
+            },
+            new Preference()
+            {
+                Id = Guid.Parse("76324c47-68d2-472d-abb8-33cfa8cc0c84"),
+                Name = "Дети",
+            }
+        };
+
+        public static IList<Customer> Customers
+        {
+            get
+            {
+                var customerId = Guid.Parse("a6c8c6b1-4349-45b0-ab31-244740aaf0f0");
+                var customers = new List<Customer>()
+                {
+                    new Customer()
+                    {
+                        Id = customerId,
+                        FirstName = "Иван",
+                        LastName = "Петров",
+                        Email = "ivan_sergeev@mail.ru",
+                        Preferences = [
+                            Preferences.FirstOrDefault(p => p.Name == "Дети")
+                        ],
+                        PromoCodes = [
+                        ]
+                    }
+                };
+
+                return customers;
+            }
+        }
+
+        public static IList<PromoCode> PromoCodes => new List<PromoCode>()
+        {
+            new PromoCode()
+            {
+                Id = Guid.NewGuid(),
+                Code = "SALE567",
+                ServiceInfo = "Special offer",
+                BeginDate = new DateTime(2022, 3, 15),
+                EndDate = new DateTime(2022, 5, 15),
+                PartnerName = "Company B"
+            },
+        };
+ 
+
+        public static void FillDataBase(DatabaseContext dataContext)
+        {
+            dataContext.Database.EnsureDeleted();
+            dataContext.Database.Migrate();
+                
+            dataContext.Roles.AddRange(Roles);
+            dataContext.Preferences.AddRange(Preferences);
+            dataContext.PromoCodes.AddRange(PromoCodes);
+            
+            dataContext.SaveChanges();
+
+            var testEmployees = Employees;
+            testEmployees[0].Roles = new List<Role>() { dataContext.Roles.FirstOrDefault(r => r.Name == "Admin") };
+            testEmployees[1].Roles = new List<Role>() { dataContext.Roles.FirstOrDefault(r => r.Name == "PartnerManager") };
+
+            var testCustomers = Customers;
+            testCustomers[0].Preferences = new List<Preference>() { dataContext.Preferences.FirstOrDefault(p => p.Name == "Дети")};
+            
+            dataContext.Employees.AddRange(testEmployees);
+            dataContext.Customers.AddRange(testCustomers);
+            dataContext.SaveChanges(); 
+            
+            var testPromoCode = dataContext.Set<PromoCode>().FirstOrDefault();
+
+            testPromoCode.PartnerManager = dataContext.Set<Employee>().FirstOrDefault();
+            testPromoCode.Preference = dataContext.Set<Preference>().FirstOrDefault();
+            testPromoCode.Customer = dataContext.Set<Customer>().FirstOrDefault();
+            
+            dataContext.SaveChanges();
+        }
     }
 }
