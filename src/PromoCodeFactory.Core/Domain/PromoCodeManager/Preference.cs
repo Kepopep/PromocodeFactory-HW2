@@ -6,6 +6,6 @@ namespace PromoCodeFactory.Core.Domain.PromoCodeManager
     {
         public string Name { get; set; }
         
-        public IList<Customer> Customers { get; set; }
+        public virtual IList<Customer> Customers { get; set; }
     }
 }

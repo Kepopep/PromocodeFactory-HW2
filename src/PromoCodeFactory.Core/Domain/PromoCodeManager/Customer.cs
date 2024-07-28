@@ -12,8 +12,8 @@ namespace PromoCodeFactory.Core.Domain.PromoCodeManager
 
         public string Email { get; set; }
         
-        public IList<Preference> Preferences { get; set; } 
+        public virtual IList<Preference> Preferences { get; set; } 
         
-        public IList<PromoCode> PromoCodes { get; set; } 
+        public virtual IList<PromoCode> PromoCodes { get; set; } 
     }
 }

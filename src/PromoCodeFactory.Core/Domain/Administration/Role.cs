@@ -8,6 +8,6 @@ namespace PromoCodeFactory.Core.Domain.Administration
 
         public string Description { get; set; }
         
-        public IList<Employee> Employees { get; set; }
+        public virtual IList<Employee> Employees { get; set; }
     }
 }

@@ -16,10 +16,10 @@ namespace PromoCodeFactory.Core.Domain.PromoCodeManager
         public string PartnerName { get; set; }
 
 
-        public Employee PartnerManager { get; set; }
+        public virtual Employee PartnerManager { get; set; }
 
-        public Preference Preference { get; set; }
+        public virtual Preference Preference { get; set; }
 
-        public Customer Customer { get; set; }
+        public virtual Customer Customer { get; set; }
     }
 }
