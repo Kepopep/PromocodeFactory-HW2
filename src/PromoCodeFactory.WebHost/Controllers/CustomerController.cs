@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using PromoCodeFactory.Core.Abstractions.Repositories;
 using PromoCodeFactory.Core.Domain.PromoCodeManager;
 using PromoCodeFactory.WebHost.Models;
-using PromoCodeFactory.WebHost.Models.Post;
 
 namespace PromoCodeFactory.WebHost.Controllers;
 
@@ -35,9 +34,6 @@ public class CustomerController : ControllerBase
     public async Task<List<CustomerResponse>> GetCustomersAsync()
     {
         var customers =  await _customerRepository.GetAllAsync();
-
-        var count1 = customers.ToList();
-        var count2 = customers.ToList().Count();
         
         var customersResponseList = customers.ToList().Select(x =>
             new CustomerResponse
@@ -90,20 +86,20 @@ public class CustomerController : ControllerBase
                 LastName = customer.LastName,
                 Email = customer.Email,
                 
-                Preferences = customer.Preferences.Select(y => new PreferenceResponse()
+                Preferences = customer.Preferences?.Select(y => new PreferenceResponse()
                 {
                     Id = y.Id,
                     Name = y.Name
-                }).ToList(),
+                }).ToList() ?? new(),
                 
-                PromoCodes = customer.PromoCodes.Select(y => new PromoCodeResponse
+                PromoCodes = customer.PromoCodes?.Select(y => new PromoCodeResponse
                 {
                     Id = y.Id,
                     Code = y.Code,
                     ServiceInfo = y.ServiceInfo,
                     BeginDate = y.BeginDate,
                     EndDate = y.EndDate
-                }).ToList(),
+                }).ToList() ?? new (),
 
             };
                 
@@ -130,10 +126,10 @@ public class CustomerController : ControllerBase
             LastName = data.LastName,
             Email = data.Email,
             
-            Preferences = data.Preferences.Select(x => new Preference()
+            Preferences = data.Preferences?.Select(x => new Preference()
             {
                 Name = x
-            }).ToList(),
+            }).ToList() ?? new (),
             
             PromoCodes = new List<PromoCode>()
         };
@@ -147,7 +143,7 @@ public class CustomerController : ControllerBase
     /// <summary>
     /// Обновление информации о покупателе
     /// </summary>
-    /// <response code="200">Обновленные данные об элементе</response>
+    /// <response code="204">Данные успешно обновлены</response>
     /// <response code="400">В случае отсутствия элемента</response>
     [HttpPatch("upd/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -165,10 +161,33 @@ public class CustomerController : ControllerBase
                 Preferences = data.Preferences.Select(x => new Preference() 
                 { 
                     Name = x, 
-                }).ToList()
+                }).ToList() ?? new()
             };
 
-            return Ok(await _customerRepository.UpdateAsync(id, updateCustomer));
+            await _customerRepository.UpdateAsync(id, updateCustomer);
+            return NoContent();
+        }
+        catch
+        {
+            return BadRequest($"No element, id={id}");
+        }
+    }
+
+
+    /// <summary>
+    /// Удаление сущности из коллекции 
+    /// </summary>
+    /// <response code="204">Элемент удален успешно</response>
+    /// <response code="400">В случае отсутствия элемента</response>
+    [HttpDelete("rm/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> DeleteCustomer(Guid id)
+    {
+        try
+        {
+            await _customerRepository.RemoveAsync(id);
+            return NoContent();
         }
         catch
         {

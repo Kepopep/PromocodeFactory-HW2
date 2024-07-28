@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using PromoCodeFactory.Core.Domain.PromoCodeManager;
 using PromoCodeFactory.EntityFramework;
 
@@ -40,10 +41,10 @@ public class CustomerEntityFrameworkRepository : EntityFrameworkRepository<Custo
         }
 
         var promoCode = DbSet.Where(x => x.Id == id);
+        var customer = DbSet.First(x => x.Id == id);
 
+        DbSet.Remove(customer);
         Context.Set<PromoCode>().RemoveRange(promoCode.First().PromoCodes);
-        
-        await DbSet.Select(x => x.Id == id).ExecuteDeleteAsync();
 
         await Context.SaveChangesAsync();
     }
@@ -57,13 +58,14 @@ public class CustomerEntityFrameworkRepository : EntityFrameworkRepository<Custo
             throw new NullReferenceException($"No element with {id}");
         }
 
-        existingCustomer.FirstName = data.FirstName;
-        existingCustomer.LastName = data.LastName;
-        existingCustomer.Email = data.Email;
-        existingCustomer.Preferences = data.Preferences;
-        existingCustomer.PromoCodes = data.PromoCodes;
+        existingCustomer.FirstName = data.FirstName ?? existingCustomer.FirstName;
+        existingCustomer.LastName = data.LastName ?? existingCustomer.LastName;
+        existingCustomer.Email = data.Email ?? existingCustomer.Email;
+        existingCustomer.Preferences = data.Preferences ?? existingCustomer.Preferences;
+        existingCustomer.PromoCodes = data.PromoCodes ?? existingCustomer.PromoCodes;
         await Context.SaveChangesAsync();
 
+        //return null;
         return existingCustomer;
     }
 }
